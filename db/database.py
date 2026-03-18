@@ -4,7 +4,6 @@ from scraper.models import JobPosting
 
 DB_NAME = "job_tracker.db"
 
-
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -16,10 +15,10 @@ def init_db():
         company TEXT NOT NULL,
         location TEXT,
         url TEXT UNIQUE NOT NULL,
-        raw_description TEXT,       -- NEW: The full text for the AI to read
-        experience_level TEXT,      -- NEW: e.g., 'Entry Level' (Filled later)
-        tech_stack TEXT,            -- NEW: e.g., 'Python, SQL' (Filled later)
-        salary TEXT,                -- NEW: (Filled later)
+        raw_description TEXT,       
+        experience_level TEXT,      
+        tech_stack TEXT,            
+        salary TEXT,                
         date_found TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """
@@ -39,8 +38,6 @@ def save_jobs(jobs: List[JobPosting]):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
-    # We use INSERT OR IGNORE so the UNIQUE url constraint doesn't crash our program
-    # if it sees a job it already saved yesterday.
     insert_query = """
     INSERT OR IGNORE INTO jobs (title, company, location, url, raw_description)
     VALUES (?, ?, ?, ?, ?)
@@ -50,16 +47,51 @@ def save_jobs(jobs: List[JobPosting]):
 
     for job in jobs:
         cursor.execute(insert_query, (job.title, job.company, job.location, job.url, job.description))
-        # cursor.rowcount tells us if a new row was added (1) or ignored (0)
         if cursor.rowcount == 1:
             new_jobs_count += 1
 
     conn.commit()
     conn.close()
 
-    print(
-        f"[*] Saved {new_jobs_count} NEW jobs to the database. ({len(jobs) - new_jobs_count} were duplicates/already existed).")
+    print(f"[*] Saved {new_jobs_count} NEW jobs to the database. ({len(jobs) - new_jobs_count} were duplicates/already existed).")
 
+
+def get_unprocessed_jobs(limit=5):
+    """Fetches a batch of jobs that haven't been analyzed by the AI yet."""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    # FIX: Process the newest jobs first!
+    cursor.execute("SELECT id, raw_description FROM jobs WHERE tech_stack IS NULL ORDER BY id DESC LIMIT ?", (limit,))
+
+    jobs = cursor.fetchall()
+    conn.close()
+    return jobs
+
+
+def update_job_ai_data(job_id: int, ai_data: dict):
+    """Updates the database with the AI's extracted JSON data."""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    tech_stack_val = ai_data.get("tech_stack", "Unknown")
+    if isinstance(tech_stack_val, list):
+        tech_stack_val = ", ".join(tech_stack_val)
+
+    update_query = """
+    UPDATE jobs 
+    SET experience_level = ?, tech_stack = ?, salary = ?
+    WHERE id = ?
+    """
+    cursor.execute(update_query, (
+        str(ai_data.get("experience_level", "Unknown")),
+        str(tech_stack_val),
+        str(ai_data.get("salary", "Unknown")),
+        job_id
+    ))
+
+    conn.commit()
+    conn.close()
 
 if __name__ == "__main__":
     init_db()
