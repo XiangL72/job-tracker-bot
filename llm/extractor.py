@@ -15,15 +15,21 @@ def analyze_job_description(description: str) -> dict:
     """Sends the raw description to Gemini and forces a structured JSON response."""
 
     # The Engineering part: A strict, zero-tolerance system prompt
+    # The Engineering Prompt: Objective Data Extraction
     prompt = f"""
-        You are an expert technical data extractor. Read the following job description and extract the data following THESE STRICT RULES:
+        You are an expert technical data extractor. Analyze the following job description and extract three specific data points.
 
-        1. "experience_level": You MUST categorize the role into exactly ONE of these exact phrases: "Internship", "Entry Level", "Mid Level", "Senior", "Director/Executive", or "Not specified". Do not copy text from the description.
-        2. "tech_stack": Extract ONLY recognized programming languages, software frameworks, databases, and cloud platforms (e.g., Python, React, AWS, PostgreSQL, Kubernetes). IGNORE generic corporate terms like "SaaS", "design tools", "AI tools", or "Figma". Return them as a comma-separated string.
-        3. "salary": Extract the compensation range if available.
+        1. "experience_level": Classify the seniority. 
+           STRICTLY use one of these exact phrases: "Internship", "Entry Level", "Mid Level", "Senior", or "Staff/Principal".
+           (If the description mentions "returning to school", "undergraduate", or "co-op", classify it as "Internship").
 
-        You MUST respond ONLY with a valid JSON object. Do not add any markdown formatting, code blocks, or conversational text.
-        Use exactly these keys: "experience_level", "tech_stack", "salary".
+        2. "tech_stack": Extract a comma-separated list of technical tools, programming languages, databases, and frameworks.
+           ONLY include hard technical skills (e.g., Python, Kubernetes, React, Redis, AWS).
+           IGNORE generic soft skills (e.g., leadership, communication, agile) and generic terms (e.g., SaaS, APIs).
+
+        3. "salary": Extract the specific salary range if provided. If not mentioned, return "Not listed".
+
+        Return ONLY a JSON object with these exact keys: "experience_level", "tech_stack", "salary". Do not include markdown formatting.
 
         Job Description:
         {description}

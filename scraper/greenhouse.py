@@ -1,33 +1,28 @@
 import requests
-from typing import List
-from scraper.models import JobPosting
+# Import our new filters
+from config import CANADA_KEYWORDS
 
 
-def fetch_jobs(company_name: str) -> List[JobPosting]:
-    api_url = f"https://boards-api.greenhouse.io/v1/boards/{company_name}/jobs?content=true"
-
+def fetch_jobs(board_token):
+    url = f"https://boards-api.greenhouse.io/v1/boards/{board_token}/jobs?content=true"
     try:
-        response = requests.get(api_url)
-        # If the company doesn't exist, this catches the 404 error
-        if response.status_code != 200:
-            return []
-
+        response = requests.get(url)
+        response.raise_for_status()
         data = response.json()
 
-        # Inside fetch_jobs, update your for-loop:
-        job_postings = []
-        for job in data.get("jobs", []):
-            import html  # We use this to clean up the messy text slightly
+        all_jobs = data.get('jobs', [])
+        canada_jobs = []
 
-            job_postings.append(JobPosting(
-                title=job.get("title", "Unknown"),
-                company=company_name,
-                location=job.get("location", {}).get("name", "Unknown"),
-                url=job.get("absolute_url", ""),
-                # Grab the raw description text
-                description=job.get("content", "")
-            ))
-        return job_postings
+        for job in all_jobs:
+            location = job.get('location', {}).get('name', "").lower()
+
+            # THE FILTER: Only keep it if it mentions a Canadian city or "Canada"
+            if any(city in location for city in CANADA_KEYWORDS):
+                canada_jobs.append(job)
+
+        print(f"[+] {board_token.upper()}: Found {len(all_jobs)} total, kept {len(canada_jobs)} in Canada.")
+        return canada_jobs
+
     except Exception as e:
-        print(f"\n[!] Network Error: {e}")
+        print(f"[-] Error fetching {board_token}: {e}")
         return []
