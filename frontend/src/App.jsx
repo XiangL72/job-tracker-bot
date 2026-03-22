@@ -1,54 +1,75 @@
 import { useState, useEffect } from 'react'
+import './App.css' // We are importing a CSS file now!
 
 function App() {
-  // 1. Set up our state variables
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // 2. The 'useEffect' hook runs once when the page loads
   useEffect(() => {
-    // This is the bridge! We ask our Node server for the data.
     fetch('http://localhost:5001/api/jobs/recent')
       .then(response => response.json())
       .then(data => {
-        setJobs(data) // Save the data to our React state
-        setLoading(false) // Turn off the loading screen
+        setJobs(data)
+        setLoading(false)
       })
       .catch(error => console.error("Error fetching jobs:", error))
   }, [])
 
-  // 3. What the user actually sees (The UI)
+  // Helper function to color-code the experience levels
+  const getBadgeClass = (level) => {
+    const lowerLevel = level?.toLowerCase() || '';
+    if (lowerLevel.includes('intern') || lowerLevel.includes('co-op')) return 'badge-intern';
+    if (lowerLevel.includes('entry')) return 'badge-entry';
+    if (lowerLevel.includes('senior') || lowerLevel.includes('staff') || lowerLevel.includes('principal')) return 'badge-senior';
+    return 'badge-mid';
+  }
+
   return (
-    <div style={{ padding: '30px', fontFamily: 'system-ui, sans-serif' }}>
-      <h1>🇨🇦 Canada Tech Command Center</h1>
+    <div className="dashboard-container">
+      <header className="dashboard-header">
+        <h1>🇨🇦 Canada Tech Command Center</h1>
+        <p>Market Intelligence & Active Opportunities</p>
+      </header>
       
       {loading ? (
-        <p>Connecting to database... grabbing the latest jobs.</p>
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Syncing with AI Database...</p>
+        </div>
       ) : (
-        <div>
-          <h3>Recent Openings ({jobs.length} found)</h3>
+        <main className="dashboard-main">
+          <div className="summary-bar">
+            <h2>Latest Openings</h2>
+            <span className="job-count">{jobs.length} roles found</span>
+          </div>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {/* 4. We loop through the array of jobs and create a "Card" for each one */}
+          <div className="job-grid">
             {jobs.map((job) => (
-              <div key={job.id} style={{ border: '1px solid #ccc', padding: '15px', borderRadius: '8px' }}>
-                <h2 style={{ margin: '0 0 10px 0' }}>{job.company} - {job.title}</h2>
-                <p style={{ margin: '5px 0' }}><strong>📍 Location:</strong> {job.location}</p>
-                <p style={{ margin: '5px 0' }}><strong>⭐ Level:</strong> {job.experience_level}</p>
-                <p style={{ margin: '5px 0' }}><strong>💻 Tech Stack:</strong> {job.tech_stack}</p>
+              <div key={job.id} className="job-card">
+                <div className="card-header">
+                  <span className="company-name">{job.company}</span>
+                  <span className={`badge ${getBadgeClass(job.experience_level)}`}>
+                    {job.experience_level}
+                  </span>
+                </div>
                 
-                <a 
-                  href={job.url} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  style={{ display: 'inline-block', marginTop: '10px', padding: '8px 16px', backgroundColor: '#007bff', color: 'white', textDecoration: 'none', borderRadius: '4px'}}
-                >
-                  View Application
+                <h3 className="job-title">{job.title}</h3>
+                
+                <div className="job-details">
+                  <p><strong>📍 Location:</strong> {job.location}</p>
+                  <p><strong>💻 Stack:</strong> {job.tech_stack}</p>
+                  {job.salary !== "Not listed" && (
+                    <p><strong>💰 Salary:</strong> {job.salary}</p>
+                  )}
+                </div>
+                
+                <a href={job.url} target="_blank" rel="noreferrer" className="apply-btn">
+                  View Application &rarr;
                 </a>
               </div>
             ))}
           </div>
-        </div>
+        </main>
       )}
     </div>
   )
