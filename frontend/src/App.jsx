@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
-import './App.css' // We are importing a CSS file now!
+import './App.css'
 
 function App() {
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(true)
+  
+  // 1. New state to track what you type in the search box
+  const [searchTerm, setSearchTerm] = useState('') 
 
   useEffect(() => {
     fetch('http://localhost:5001/api/jobs/recent')
@@ -15,7 +18,6 @@ function App() {
       .catch(error => console.error("Error fetching jobs:", error))
   }, [])
 
-  // Helper function to color-code the experience levels
   const getBadgeClass = (level) => {
     const lowerLevel = level?.toLowerCase() || '';
     if (lowerLevel.includes('intern') || lowerLevel.includes('co-op')) return 'badge-intern';
@@ -23,6 +25,16 @@ function App() {
     if (lowerLevel.includes('senior') || lowerLevel.includes('staff') || lowerLevel.includes('principal')) return 'badge-senior';
     return 'badge-mid';
   }
+
+  // 2. The math that filters the jobs based on your search
+  const filteredJobs = jobs.filter(job => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (job.company && job.company.toLowerCase().includes(searchLower)) ||
+      (job.title && job.title.toLowerCase().includes(searchLower)) ||
+      (job.tech_stack && job.tech_stack.toLowerCase().includes(searchLower))
+    );
+  });
 
   return (
     <div className="dashboard-container">
@@ -40,11 +52,22 @@ function App() {
         <main className="dashboard-main">
           <div className="summary-bar">
             <h2>Latest Openings</h2>
-            <span className="job-count">{jobs.length} roles found</span>
+            
+            {/* 3. The new visual Search Box */}
+            <input 
+              type="text" 
+              placeholder="Search company, title, or tech..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: '300px', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.95rem', outline: 'none' }}
+            />
+
+            <span className="job-count">{filteredJobs.length} roles found</span>
           </div>
           
           <div className="job-grid">
-            {jobs.map((job) => (
+            {/* 4. We now map over "filteredJobs" instead of all "jobs" */}
+            {filteredJobs.map((job) => (
               <div key={job.id} className="job-card">
                 <div className="card-header">
                   <span className="company-name">{job.company}</span>
