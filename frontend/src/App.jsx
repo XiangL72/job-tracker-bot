@@ -5,8 +5,9 @@ function App() {
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(true)
   
-  // 1. New state to track what you type in the search box
+  // Our two filter states
   const [searchTerm, setSearchTerm] = useState('') 
+  const [filterLevel, setFilterLevel] = useState('All')
 
   useEffect(() => {
     fetch('http://localhost:5001/api/jobs/recent')
@@ -26,14 +27,19 @@ function App() {
     return 'badge-mid';
   }
 
-  // 2. The math that filters the jobs based on your search
+  // The math that filters by BOTH the search box and the dropdown
   const filteredJobs = jobs.filter(job => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = (
       (job.company && job.company.toLowerCase().includes(searchLower)) ||
       (job.title && job.title.toLowerCase().includes(searchLower)) ||
       (job.tech_stack && job.tech_stack.toLowerCase().includes(searchLower))
     );
+    
+    const matchesLevel = filterLevel === 'All' || 
+                         (job.experience_level && job.experience_level.toLowerCase().includes(filterLevel.toLowerCase()));
+    
+    return matchesSearch && matchesLevel;
   });
 
   return (
@@ -53,20 +59,32 @@ function App() {
           <div className="summary-bar">
             <h2>Latest Openings</h2>
             
-            {/* 3. The new visual Search Box */}
-            <input 
-              type="text" 
-              placeholder="Search company, title, or tech..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ width: '300px', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.95rem', outline: 'none' }}
-            />
+            {/* The new Search and Filter Controls */}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <input 
+                type="text" 
+                placeholder="Search company, title, or tech..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ width: '260px', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.95rem', outline: 'none' }}
+              />
+              
+              <select 
+                value={filterLevel} 
+                onChange={(e) => setFilterLevel(e.target.value)}
+                style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.95rem', outline: 'none', backgroundColor: 'white', cursor: 'pointer' }}
+              >
+                <option value="All">All Levels</option>
+                <option value="intern">Intern / Co-op</option>
+                <option value="entry">Entry Level</option>
+                <option value="senior">Senior / Staff</option>
+              </select>
+            </div>
 
             <span className="job-count">{filteredJobs.length} roles found</span>
           </div>
           
           <div className="job-grid">
-            {/* 4. We now map over "filteredJobs" instead of all "jobs" */}
             {filteredJobs.map((job) => (
               <div key={job.id} className="job-card">
                 <div className="card-header">
