@@ -5,7 +5,6 @@ function App() {
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(true)
   
-  // Our two filter states
   const [searchTerm, setSearchTerm] = useState('') 
   const [filterLevel, setFilterLevel] = useState('All')
 
@@ -27,7 +26,6 @@ function App() {
     return 'badge-mid';
   }
 
-  // The math that filters by BOTH the search box and the dropdown
   const filteredJobs = jobs.filter(job => {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = (
@@ -59,7 +57,6 @@ function App() {
           <div className="summary-bar">
             <h2>Latest Openings</h2>
             
-            {/* The new Search and Filter Controls */}
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <input 
                 type="text" 
@@ -98,22 +95,21 @@ function App() {
                 
                 <div className="job-details">
                   <p><strong>📍 Location:</strong> {job.location}</p>
-                  <p><strong>💻 Stack:</strong> {job.tech_stack}</p>
                   {job.salary !== "Not listed" && (
                     <p><strong>💰 Salary:</strong> {job.salary}</p>
                   )}
-                </div>
-                
-                <a href={job.url} target="_blank" rel="noreferrer" className="apply-btn">
-                  View Application &rarr;
-                </a>
-              </div>
-            ))}
-          </div>
-        </main>
-      )}
-    </div>
-  )
-}
-
-export default App
+                  
+                  {/* NEW UPDATE: Beautiful UI Tags for the Tech Stack */}
+                  <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {(job.tech_stack || 'Not listed').split(',').map((tech, index) => (
+                      <span 
+                        key={index} 
+                        style={{
+                          backgroundColor: '#f1f5f9',
+                          color: '#475569',
+                          fontSize: '0.75rem',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          fontWeight: '500',
+                          border: '1px solid #e2e8f0'
+                        }}
