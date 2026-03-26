@@ -81,35 +81,68 @@ function App() {
             <span className="job-count">{filteredJobs.length} roles found</span>
           </div>
           
-          <div className="job-grid">
-            {filteredJobs.map((job) => (
-              <div key={job.id} className="job-card">
-                <div className="card-header">
-                  <span className="company-name">{job.company}</span>
-                  <span className={`badge ${getBadgeClass(job.experience_level)}`}>
-                    {job.experience_level}
-                  </span>
-                </div>
-                
-                <h3 className="job-title">{job.title}</h3>
-                
-                <div className="job-details">
-                  <p><strong>📍 Location:</strong> {job.location}</p>
-                  {job.salary !== "Not listed" && (
-                    <p><strong>💰 Salary:</strong> {job.salary}</p>
-                  )}
+          {/* NEW UPDATE: The Empty State Check */}
+          {filteredJobs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: 'white', borderRadius: '12px', border: '2px dashed #cbd5e1', marginTop: '20px' }}>
+              <h3 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '10px' }}>No roles found 🕵️‍♂️</h3>
+              <p style={{ color: '#64748b', marginBottom: '20px' }}>We couldn't find any jobs matching your current search or filters.</p>
+              <button 
+                onClick={() => { setSearchTerm(''); setFilterLevel('All'); }}
+                style={{ padding: '10px 20px', backgroundColor: 'var(--primary-accent)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}
+              >
+                Clear All Filters
+              </button>
+            </div>
+          ) : (
+            <div className="job-grid">
+              {filteredJobs.map((job) => (
+                <div key={job.id} className="job-card">
+                  <div className="card-header">
+                    <span className="company-name">{job.company}</span>
+                    <span className={`badge ${getBadgeClass(job.experience_level)}`}>
+                      {job.experience_level}
+                    </span>
+                  </div>
                   
-                  {/* NEW UPDATE: Beautiful UI Tags for the Tech Stack */}
-                  <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {(job.tech_stack || 'Not listed').split(',').map((tech, index) => (
-                      <span 
-                        key={index} 
-                        style={{
-                          backgroundColor: '#f1f5f9',
-                          color: '#475569',
-                          fontSize: '0.75rem',
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontWeight: '500',
-                          border: '1px solid #e2e8f0'
-                        }}
+                  <h3 className="job-title">{job.title}</h3>
+                  
+                  <div className="job-details">
+                    <p><strong>📍 Location:</strong> {job.location}</p>
+                    {job.salary !== "Not listed" && (
+                      <p><strong>💰 Salary:</strong> {job.salary}</p>
+                    )}
+                    
+                    <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {(job.tech_stack || 'Not listed').split(',').map((tech, index) => (
+                        <span 
+                          key={index} 
+                          style={{
+                            backgroundColor: '#f1f5f9',
+                            color: '#475569',
+                            fontSize: '0.75rem',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            fontWeight: '500',
+                            border: '1px solid #e2e8f0'
+                          }}
+                        >
+                          {tech.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <a href={job.url} target="_blank" rel="noreferrer" className="apply-btn">
+                    View Application &rarr;
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      )}
+    </div>
+  )
+}
+
+export default App
