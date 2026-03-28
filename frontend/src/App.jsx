@@ -8,7 +8,9 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('') 
   const [filterLevel, setFilterLevel] = useState('All')
   
-  // NEW: State to track which job link was just copied!
+  // NEW: State to track our sorting preference
+  const [sortOrder, setSortOrder] = useState('default')
+  
   const [copiedId, setCopiedId] = useState(null)
 
   useEffect(() => {
@@ -29,7 +31,6 @@ function App() {
     return 'badge-mid';
   }
 
-  // NEW: The function that copies the text and sets a 2-second timer
   const handleCopyLink = (id, url) => {
     navigator.clipboard.writeText(url);
     setCopiedId(id);
@@ -38,7 +39,8 @@ function App() {
     }, 2000);
   }
 
-  const filteredJobs = jobs.filter(job => {
+  // UPDATED: We filter the jobs, and then immediately sort them!
+  const filteredAndSortedJobs = jobs.filter(job => {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = (
       (job.company && job.company.toLowerCase().includes(searchLower)) ||
@@ -50,6 +52,10 @@ function App() {
                          (job.experience_level && job.experience_level.toLowerCase().includes(filterLevel.toLowerCase()));
     
     return matchesSearch && matchesLevel;
+  }).sort((a, b) => {
+    if (sortOrder === 'a-z') return a.company.localeCompare(b.company);
+    if (sortOrder === 'z-a') return b.company.localeCompare(a.company);
+    return 0; // Do nothing if "default" is selected
   });
 
   return (
@@ -69,13 +75,13 @@ function App() {
           <div className="summary-bar">
             <h2>Latest Openings</h2>
             
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
               <input 
                 type="text" 
                 placeholder="Search company, title, or tech..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ width: '260px', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.95rem', outline: 'none' }}
+                style={{ width: '220px', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.95rem', outline: 'none' }}
               />
               
               <select 
@@ -88,12 +94,9 @@ function App() {
                 <option value="entry">Entry Level</option>
                 <option value="senior">Senior / Staff</option>
               </select>
-            </div>
 
-            <span className="job-count">{filteredJobs.length} roles found</span>
-          </div>
-          
-          {filteredJobs.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: 'white', borderRadius: '12px', border: '2px dashed #cbd5e1', marginTop: '20px' }}>
-              <h3 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '10px' }}>No roles found 🕵️‍♂️</h3>
-              <p style={{ color: '#64748b', marginBottom:
+              {/* NEW: The Sorting Dropdown */}
+              <select 
+                value={sortOrder} 
+                onChange={(e) => setSortOrder(e.target.value)}
+                style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.95rem', outline
