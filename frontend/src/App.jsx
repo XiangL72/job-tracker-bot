@@ -7,10 +7,7 @@ function App() {
   
   const [searchTerm, setSearchTerm] = useState('') 
   const [filterLevel, setFilterLevel] = useState('All')
-  
-  // NEW: State to track our sorting preference
   const [sortOrder, setSortOrder] = useState('default')
-  
   const [copiedId, setCopiedId] = useState(null)
 
   useEffect(() => {
@@ -39,7 +36,17 @@ function App() {
     }, 2000);
   }
 
-  // UPDATED: We filter the jobs, and then immediately sort them!
+  // NEW FEATURE: Calculate the Top 5 Trending Technologies dynamically!
+  const allTech = jobs.flatMap(job => (job.tech_stack || '').split(',').map(t => t.trim()).filter(t => t !== 'Not listed' && t !== ''));
+  const techCounts = allTech.reduce((acc, tech) => {
+    acc[tech] = (acc[tech] || 0) + 1;
+    return acc;
+  }, {});
+  const topTech = Object.entries(techCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(t => t[0]);
+
   const filteredAndSortedJobs = jobs.filter(job => {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = (
@@ -55,7 +62,7 @@ function App() {
   }).sort((a, b) => {
     if (sortOrder === 'a-z') return a.company.localeCompare(b.company);
     if (sortOrder === 'z-a') return b.company.localeCompare(a.company);
-    return 0; // Do nothing if "default" is selected
+    return 0; 
   });
 
   return (
@@ -73,9 +80,45 @@ function App() {
       ) : (
         <main className="dashboard-main">
           <div className="summary-bar">
-            <h2>Latest Openings</h2>
-            
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div>
+              <h2>Latest Openings</h2>
+              
+              {/* NEW FEATURE: The Trending Tech Buttons */}
+              {topTech.length > 0 && (
+                <div style={{ marginTop: '10px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase' }}>🔥 Trending:</span>
+                  {topTech.map(tech => (
+                    <button 
+                      key={tech}
+                      onClick={() => setSearchTerm(tech)}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '0.8rem',
+                        backgroundColor: searchTerm === tech ? 'var(--primary-accent)' : '#e2e8f0',
+                        color: searchTerm === tech ? 'white' : '#334155',
+                        border: 'none',
+                        borderRadius: '20px',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {tech}
+                    </button>
+                  ))}
+                  {searchTerm && (
+                    <button 
+                      onClick={() => setSearchTerm('')}
+                      style={{ padding: '4px 8px', fontSize: '0.8rem', backgroundColor: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginTop: '15px' }}>
               <input 
                 type="text" 
                 placeholder="Search company, title, or tech..." 
@@ -95,8 +138,106 @@ function App() {
                 <option value="senior">Senior / Staff</option>
               </select>
 
-              {/* NEW: The Sorting Dropdown */}
               <select 
                 value={sortOrder} 
                 onChange={(e) => setSortOrder(e.target.value)}
-                style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.95rem', outline
+                style={{ padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)', fontSize: '0.95rem', outline: 'none', backgroundColor: '#f8fafc', cursor: 'pointer', fontWeight: '500' }}
+              >
+                <option value="default">Sort: Newest First</option>
+                <option value="a-z">Company: A to Z</option>
+                <option value="z-a">Company: Z to A</option>
+              </select>
+            </div>
+
+            <span className="job-count" style={{ marginTop: '15px', display: 'inline-block' }}>{filteredAndSortedJobs.length} roles found</span>
+          </div>
+          
+          {filteredAndSortedJobs.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: 'white', borderRadius: '12px', border: '2px dashed #cbd5e1', marginTop: '20px' }}>
+              <h3 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '10px' }}>No roles found 🕵️‍♂️</h3>
+              <p style={{ color: '#64748b', marginBottom: '20px' }}>We couldn't find any jobs matching your current search or filters.</p>
+              <button 
+                onClick={() => { setSearchTerm(''); setFilterLevel('All'); setSortOrder('default'); }}
+                style={{ padding: '10px 20px', backgroundColor: 'var(--primary-accent)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}
+              >
+                Clear All Filters
+              </button>
+            </div>
+          ) : (
+            <div className="job-grid">
+              {filteredAndSortedJobs.map((job) => (
+                <div key={job.id} className="job-card">
+                  <div className="card-header">
+                    <span className="company-name">{job.company}</span>
+                    <span className={`badge ${getBadgeClass(job.experience_level)}`}>
+                      {job.experience_level}
+                    </span>
+                  </div>
+                  
+                  <h3 className="job-title">{job.title}</h3>
+                  
+                  <div className="job-details">
+                    <p><strong>📍 Location:</strong> {job.location}</p>
+                    {job.salary !== "Not listed" && (
+                      <p><strong>💰 Salary:</strong> {job.salary}</p>
+                    )}
+                    
+                    <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {(job.tech_stack || 'Not listed').split(',').map((tech, index) => (
+                        <span 
+                          key={index} 
+                          style={{
+                            backgroundColor: '#f1f5f9',
+                            color: '#475569',
+                            fontSize: '0.75rem',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            fontWeight: '500',
+                            border: '1px solid #e2e8f0'
+                          }}
+                        >
+                          {tech.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                    <a 
+                      href={job.url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="apply-btn"
+                      style={{ flex: 1, margin: 0 }}
+                    >
+                      View App &rarr;
+                    </a>
+                    
+                    <button
+                      onClick={() => handleCopyLink(job.id, job.url)}
+                      style={{
+                        padding: '10px 16px',
+                        backgroundColor: copiedId === job.id ? '#dcfce7' : '#f1f5f9',
+                        color: copiedId === job.id ? '#166534' : '#475569',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {copiedId === job.id ? '✅ Copied!' : '🔗 Copy'}
+                    </button>
+                  </div>
+
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      )}
+    </div>
+  )
+}
+
+export default App
