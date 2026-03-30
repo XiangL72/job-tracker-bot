@@ -10,6 +10,18 @@ function App() {
   const [sortOrder, setSortOrder] = useState('default')
   const [copiedId, setCopiedId] = useState(null)
 
+  // NEW FEATURE: Local Storage Memory for Pinned Jobs
+  const [savedJobIds, setSavedJobIds] = useState(() => {
+    const saved = localStorage.getItem('canadaCommandCenterPins');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
+
+  // Every time you pin/unpin a job, save it to the browser's memory
+  useEffect(() => {
+    localStorage.setItem('canadaCommandCenterPins', JSON.stringify(savedJobIds));
+  }, [savedJobIds]);
+
   useEffect(() => {
     fetch('http://localhost:5001/api/jobs/recent')
       .then(response => response.json())
@@ -36,7 +48,13 @@ function App() {
     }, 2000);
   }
 
-  // NEW FEATURE: Calculate the Top 5 Trending Technologies dynamically!
+  // NEW: Function to toggle the Pin on and off
+  const togglePin = (id) => {
+    setSavedJobIds(prev => 
+      prev.includes(id) ? prev.filter(jobId => jobId !== id) : [...prev, id]
+    );
+  }
+
   const allTech = jobs.flatMap(job => (job.tech_stack || '').split(',').map(t => t.trim()).filter(t => t !== 'Not listed' && t !== ''));
   const techCounts = allTech.reduce((acc, tech) => {
     acc[tech] = (acc[tech] || 0) + 1;
@@ -48,6 +66,9 @@ function App() {
     .map(t => t[0]);
 
   const filteredAndSortedJobs = jobs.filter(job => {
+    // NEW: If "Show Saved Only" is checked, instantly hide unpinned jobs
+    if (showSavedOnly && !savedJobIds.includes(job.id)) return false;
+
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = (
       (job.company && job.company.toLowerCase().includes(searchLower)) ||
@@ -68,8 +89,35 @@ function App() {
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
-        <h1>🇨🇦 Canada Tech Command Center</h1>
-        <p>Market Intelligence & Active Opportunities</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+          <div>
+            <h1>🇨🇦 Canada Tech Command Center</h1>
+            <p>Market Intelligence & Active Opportunities</p>
+          </div>
+          
+          {/* NEW: The Pinned Jobs Toggle Switch */}
+          <button 
+            onClick={() => setShowSavedOnly(!showSavedOnly)}
+            style={{
+              padding: '10px 16px',
+              backgroundColor: showSavedOnly ? '#fef08a' : '#f1f5f9',
+              color: showSavedOnly ? '#854d0e' : '#475569',
+              border: showSavedOnly ? '1px solid #eab308' : '1px solid #cbd5e1',
+              borderRadius: '20px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {showSavedOnly ? '📌 Showing Pinned' : '📍 Show Pinned Only'} 
+            <span style={{ backgroundColor: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>
+              {savedJobIds.length}
+            </span>
+          </button>
+        </div>
       </header>
       
       {loading ? (
@@ -83,7 +131,6 @@ function App() {
             <div>
               <h2>Latest Openings</h2>
               
-              {/* NEW FEATURE: The Trending Tech Buttons */}
               {topTech.length > 0 && (
                 <div style={{ marginTop: '10px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600', textTransform: 'uppercase' }}>🔥 Trending:</span>
@@ -157,7 +204,7 @@ function App() {
               <h3 style={{ fontSize: '1.5rem', color: '#0f172a', marginBottom: '10px' }}>No roles found 🕵️‍♂️</h3>
               <p style={{ color: '#64748b', marginBottom: '20px' }}>We couldn't find any jobs matching your current search or filters.</p>
               <button 
-                onClick={() => { setSearchTerm(''); setFilterLevel('All'); setSortOrder('default'); }}
+                onClick={() => { setSearchTerm(''); setFilterLevel('All'); setSortOrder('default'); setShowSavedOnly(false); }}
                 style={{ padding: '10px 20px', backgroundColor: 'var(--primary-accent)', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500' }}
               >
                 Clear All Filters
@@ -165,73 +212,87 @@ function App() {
             </div>
           ) : (
             <div className="job-grid">
-              {filteredAndSortedJobs.map((job) => (
-                <div key={job.id} className="job-card">
-                  <div className="card-header">
-                    <span className="company-name">{job.company}</span>
-                    <span className={`badge ${getBadgeClass(job.experience_level)}`}>
-                      {job.experience_level}
-                    </span>
-                  </div>
-                  
-                  <h3 className="job-title">{job.title}</h3>
-                  
-                  <div className="job-details">
-                    <p><strong>📍 Location:</strong> {job.location}</p>
-                    {job.salary !== "Not listed" && (
-                      <p><strong>💰 Salary:</strong> {job.salary}</p>
-                    )}
-                    
-                    <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {(job.tech_stack || 'Not listed').split(',').map((tech, index) => (
-                        <span 
-                          key={index} 
-                          style={{
-                            backgroundColor: '#f1f5f9',
-                            color: '#475569',
-                            fontSize: '0.75rem',
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                            fontWeight: '500',
-                            border: '1px solid #e2e8f0'
-                          }}
-                        >
-                          {tech.trim()}
+              {filteredAndSortedJobs.map((job) => {
+                const isPinned = savedJobIds.includes(job.id);
+                
+                return (
+                  <div key={job.id} className="job-card" style={{ border: isPinned ? '2px solid #fbbf24' : '1px solid var(--border-color)' }}>
+                    <div className="card-header">
+                      <span className="company-name">{job.company}</span>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <span className={`badge ${getBadgeClass(job.experience_level)}`}>
+                          {job.experience_level}
                         </span>
-                      ))}
+                        {/* NEW: The Pin Button */}
+                        <button 
+                          onClick={() => togglePin(job.id)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '0' }}
+                          title={isPinned ? "Unpin Job" : "Pin Job"}
+                        >
+                          {isPinned ? '📌' : '📍'}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                    <a 
-                      href={job.url} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="apply-btn"
-                      style={{ flex: 1, margin: 0 }}
-                    >
-                      View App &rarr;
-                    </a>
                     
-                    <button
-                      onClick={() => handleCopyLink(job.id, job.url)}
-                      style={{
-                        padding: '10px 16px',
-                        backgroundColor: copiedId === job.id ? '#dcfce7' : '#f1f5f9',
-                        color: copiedId === job.id ? '#166534' : '#475569',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      {copiedId === job.id ? '✅ Copied!' : '🔗 Copy'}
-                    </button>
-                  </div>
+                    <h3 className="job-title">{job.title}</h3>
+                    
+                    <div className="job-details">
+                      <p><strong>📍 Location:</strong> {job.location}</p>
+                      {job.salary !== "Not listed" && (
+                        <p><strong>💰 Salary:</strong> {job.salary}</p>
+                      )}
+                      
+                      <div style={{ marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {(job.tech_stack || 'Not listed').split(',').map((tech, index) => (
+                          <span 
+                            key={index} 
+                            style={{
+                              backgroundColor: '#f1f5f9',
+                              color: '#475569',
+                              fontSize: '0.75rem',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              fontWeight: '500',
+                              border: '1px solid #e2e8f0'
+                            }}
+                          >
+                            {tech.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                      <a 
+                        href={job.url} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="apply-btn"
+                        style={{ flex: 1, margin: 0 }}
+                      >
+                        View App &rarr;
+                      </a>
+                      
+                      <button
+                        onClick={() => handleCopyLink(job.id, job.url)}
+                        style={{
+                          padding: '10px 16px',
+                          backgroundColor: copiedId === job.id ? '#dcfce7' : '#f1f5f9',
+                          color: copiedId === job.id ? '#166534' : '#475569',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        {copiedId === job.id ? '✅ Copied!' : '🔗 Copy'}
+                      </button>
+                    </div>
 
-                </div>
-              ))}
+                  </div>
+                )
+              })}
             </div>
           )}
         </main>
