@@ -10,14 +10,12 @@ function App() {
   const [sortOrder, setSortOrder] = useState('default')
   const [copiedId, setCopiedId] = useState(null)
 
-  // NEW FEATURE: Local Storage Memory for Pinned Jobs
   const [savedJobIds, setSavedJobIds] = useState(() => {
     const saved = localStorage.getItem('canadaCommandCenterPins');
     return saved ? JSON.parse(saved) : [];
   });
   const [showSavedOnly, setShowSavedOnly] = useState(false);
 
-  // Every time you pin/unpin a job, save it to the browser's memory
   useEffect(() => {
     localStorage.setItem('canadaCommandCenterPins', JSON.stringify(savedJobIds));
   }, [savedJobIds]);
@@ -48,11 +46,20 @@ function App() {
     }, 2000);
   }
 
-  // NEW: Function to toggle the Pin on and off
   const togglePin = (id) => {
     setSavedJobIds(prev => 
       prev.includes(id) ? prev.filter(jobId => jobId !== id) : [...prev, id]
     );
+  }
+
+  // NEW FEATURE: A math function that turns a company name into a consistent beautiful color!
+  const getAvatarColor = (companyName) => {
+    const colors = ['#f87171', '#fb923c', '#fbbf24', '#a3e635', '#34d399', '#2dd4bf', '#38bdf8', '#818cf8', '#c084fc', '#f472b6'];
+    let hash = 0;
+    for (let i = 0; i < companyName.length; i++) {
+      hash = companyName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
   }
 
   const allTech = jobs.flatMap(job => (job.tech_stack || '').split(',').map(t => t.trim()).filter(t => t !== 'Not listed' && t !== ''));
@@ -66,7 +73,6 @@ function App() {
     .map(t => t[0]);
 
   const filteredAndSortedJobs = jobs.filter(job => {
-    // NEW: If "Show Saved Only" is checked, instantly hide unpinned jobs
     if (showSavedOnly && !savedJobIds.includes(job.id)) return false;
 
     const searchLower = searchTerm.toLowerCase();
@@ -95,7 +101,6 @@ function App() {
             <p>Market Intelligence & Active Opportunities</p>
           </div>
           
-          {/* NEW: The Pinned Jobs Toggle Switch */}
           <button 
             onClick={() => setShowSavedOnly(!showSavedOnly)}
             style={{
@@ -217,16 +222,35 @@ function App() {
                 
                 return (
                   <div key={job.id} className="job-card" style={{ border: isPinned ? '2px solid #fbbf24' : '1px solid var(--border-color)' }}>
-                    <div className="card-header">
-                      <span className="company-name">{job.company}</span>
+                    
+                    {/* NEW: The Upgraded Card Header with the Colored Avatar! */}
+                    <div className="card-header" style={{ marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '8px',
+                          backgroundColor: getAvatarColor(job.company),
+                          color: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 'bold',
+                          fontSize: '1.1rem',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        }}>
+                          {job.company.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="company-name" style={{ margin: 0 }}>{job.company}</span>
+                      </div>
+
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         <span className={`badge ${getBadgeClass(job.experience_level)}`}>
                           {job.experience_level}
                         </span>
-                        {/* NEW: The Pin Button */}
                         <button 
                           onClick={() => togglePin(job.id)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '0' }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', padding: '0', transition: 'transform 0.1s' }}
                           title={isPinned ? "Unpin Job" : "Pin Job"}
                         >
                           {isPinned ? '📌' : '📍'}
