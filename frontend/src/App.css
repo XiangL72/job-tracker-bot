@@ -157,3 +157,42 @@ body {
   padding: 60px 0;
   color: var(--text-muted);
 }
+
+/* =========================================
+   NEW: Premium UI Animations & Scrollbar
+   ========================================= */
+
+/* 1. Smooth Page Load Animation */
+@keyframes fadeUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(15px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.dashboard-main {
+  animation: fadeUp 0.5s ease-out forwards;
+}
+
+/* 2. Custom Mac-Style Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+  border: 2px solid var(--bg-color); /* Gives it a nice padded look */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
