@@ -196,3 +196,30 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* =========================================
+   NEW: Glass Header & 3D Card Hover
+   ========================================= */
+
+/* 1. Sticky Apple-style Glass Header */
+.dashboard-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  /* Overwrite the solid background with a slightly transparent one */
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  /* Add the frosted glass blur effect */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+/* 2. 3D Hover Lift for Job Cards */
+.job-card {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.job-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+}
