@@ -223,3 +223,34 @@ body {
   transform: translateY(-5px);
   box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
 }
+
+/* =========================================
+   NEW: Premium Typography & Selection
+   ========================================= */
+
+/* 1. Animated Gradient for the Main Title */
+.dashboard-header h1 {
+  background: linear-gradient(to right, #2563eb, #9333ea, #db2777, #2563eb);
+  background-size: 300% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shine 6s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 300% center;
+  }
+}
+
+/* 2. Custom Text Highlight Color */
+::selection {
+  background-color: #db2777; /* A sleek pink/magenta */
+  color: white;
+}
+
+::-moz-selection {
+  background-color: #db2777;
+  color: white;
+}
