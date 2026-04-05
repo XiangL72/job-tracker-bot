@@ -254,3 +254,20 @@ body {
   background-color: #db2777;
   color: white;
 }
+
+/* =========================================
+   NEW: Modern SaaS Dot Grid Background
+   ========================================= */
+
+body {
+  /* Creates a repeating dotted pattern */
+  background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+  /* Keeps the dots locked in place while the cards scroll over them */
+  background-attachment: fixed;
+}
+
+/* Give the job cards a solid white background so they pop against the grid */
+.job-card {
+  background-color: #ffffff;
+}
