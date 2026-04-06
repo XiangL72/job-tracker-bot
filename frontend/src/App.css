@@ -271,3 +271,37 @@ body {
 .job-card {
   background-color: #ffffff;
 }
+
+/* =========================================
+   NEW: Premium Shimmer Button Effect
+   ========================================= */
+
+/* Setup the button to hold the shine */
+.apply-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Create the invisible beam of light */
+.apply-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  transition: none;
+}
+
+/* When hovered, fire the beam of light across the button */
+.apply-btn:hover::after {
+  left: 150%;
+  transition: all 0.6s ease-in-out;
+}
