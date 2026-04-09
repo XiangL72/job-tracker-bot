@@ -367,3 +367,14 @@ body {
 .job-card:nth-child(9) { animation-delay: 0.45s; }
 /* Any card after the 9th loads in together so the user isn't waiting forever */
 .job-card:nth-child(n+10) { animation-delay: 0.50s; }
+
+/* =========================================
+   NEW: Premium Input Focus Glow
+   ========================================= */
+
+input:focus, select:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important; 
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15) !important; 
+  transition: all 0.2s ease;
+}
